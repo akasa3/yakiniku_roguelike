@@ -13,6 +13,7 @@ import {
   VEGAN_MEAT_EAT_WARNING_PENALTY,
   STAFF_WARNING_GAME_OVER_THRESHOLD,
   STAFF_WARNING_STACK_THRESHOLD,
+  BASE_EAT_COOLDOWN,
   STAFF_WARNING_EAT_COOLDOWN,
 } from '../data/constants';
 import { getCharacter, CHARACTERS } from '../data/characters';
@@ -383,9 +384,14 @@ export function processAction(
         newState = { ...newState, grill: grillWithTableItem, table: remainingTable };
       }
 
-      // Apply eat cooldown if staff warning is high enough
-      if (newState.staffWarningCount >= STAFF_WARNING_STACK_THRESHOLD) {
-        newState = { ...newState, actionDisabledTimer: STAFF_WARNING_EAT_COOLDOWN };
+      // Apply eat cooldown — base cooldown always, longer when staff is angry
+      {
+        const baseCooldown = newState.staffWarningCount >= STAFF_WARNING_STACK_THRESHOLD
+          ? STAFF_WARNING_EAT_COOLDOWN
+          : BASE_EAT_COOLDOWN;
+        // Speed Eater / Competitive Eater reduces cooldown
+        const cooldown = baseCooldown * modifiers.eatingSpeedMultiplier;
+        newState = { ...newState, actionDisabledTimer: cooldown };
       }
 
       // Check phase transition

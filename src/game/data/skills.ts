@@ -51,7 +51,7 @@ const CORE_SKILLS: readonly SkillDefinition[] = [
     nameJP: '早食い',
     build: 'speed',
     isStackable: false,
-    description: '食べる速度が30%アップ。キャラ固有の速度がある場合はそちらが優先。',
+    description: '食べた後のクールダウンが30%短縮（0.3秒→0.21秒）。激怒時も1.0秒→0.7秒に。',
   },
   {
     id: 'quick-order',

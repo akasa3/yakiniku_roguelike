@@ -829,8 +829,8 @@ describe('Character: Raw Food Advocate — peaky with iron-stomach starter', () 
 
     const after = processAction(state, 'eat', 0);
 
-    // iron-stomach negates the raw-meat action disable (RAW_MEAT_DISABLE_DURATION)
-    expect(after.actionDisabledTimer).toBe(0);
+    // iron-stomach negates the raw-meat penalty; only base eat cooldown remains (0.3s)
+    expect(after.actionDisabledTimer).toBeLessThanOrEqual(0.3);
     // Slot cleared successfully
     expect(after.grill[0]!.part).toBeNull();
     expect(after.restaurant.meatDishesEaten).toBe(1);

@@ -76,7 +76,10 @@ export const STAFF_WARNING_STACK_THRESHOLD = 5; // [TUNE]
 /** Staff Warning counter value that triggers game over (kicked out of restaurant). */
 export const STAFF_WARNING_GAME_OVER_THRESHOLD = 8; // [TUNE]
 
-/** Eat cooldown in seconds applied when staffWarningCount >= STAFF_WARNING_STACK_THRESHOLD. */
+/** Base eat cooldown in seconds (applied after every eat action). */
+export const BASE_EAT_COOLDOWN = 0.3; // [TUNE]
+
+/** Eat cooldown in seconds applied when staffWarningCount >= STAFF_WARNING_STACK_THRESHOLD (replaces base). */
 export const STAFF_WARNING_EAT_COOLDOWN = 1.0; // [TUNE]
 
 // ---------------------------------------------------------------------------
