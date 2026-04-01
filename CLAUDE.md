@@ -2,11 +2,12 @@
 
 ## Project Overview
 
-**Yakiniku Roguelike — "Solo BBQ Dungeon"**
+**Yakiniku Roguelike — "Solo BBQ Dungeon" (ソロBBQダンジョン)**
 An April Fools' Day 2026 browser game. Real-time roguelike set in an all-you-can-eat Japanese BBQ restaurant. The player grills and eats meat dishes served by the restaurant; the run ends when the player fails. Score = restaurants cleared.
 
-- Full game spec: [`GAME_DESIGN.md`](./GAME_DESIGN.md)
-- Functional requirements: [`requirements.md`](./requirements.md)
+- Full game spec: [`specs/GAME_DESIGN.md`](./specs/GAME_DESIGN.md)
+- Functional requirements: [`specs/requirements.md`](./specs/requirements.md)
+- Development process: [`specs/DEVELOPMENT_PROCESS.md`](./specs/DEVELOPMENT_PROCESS.md)
 
 ---
 
@@ -14,10 +15,12 @@ An April Fools' Day 2026 browser game. Real-time roguelike set in an all-you-can
 
 | Layer | Choice |
 |---|---|
-| Language | TypeScript |
-| Framework | React |
-| Build tool | Vite |
-| Deployment | GitHub Pages |
+| Language | TypeScript (strict mode) |
+| Framework | React 19 |
+| Build tool | Vite 6 |
+| Testing | Vitest + @testing-library/react |
+| Linting | ESLint + typescript-eslint |
+| Deployment | GitHub Pages (via GitHub Actions) |
 | Package manager | npm |
 
 ---
@@ -31,7 +34,7 @@ npm run build        # Production build → dist/
 npm run preview      # Preview production build locally
 npm run typecheck    # Run tsc --noEmit
 npm run lint         # Run ESLint
-npm test             # Run Vitest
+npm test             # Run Vitest (1413+ tests)
 ```
 
 Always run `typecheck` and `lint` after a series of code changes.
@@ -42,75 +45,122 @@ Always run `typecheck` and `lint` after a series of code changes.
 
 ```
 src/
-  components/     # React UI components
+  components/     # React UI components (9 screens)
   game/           # Core game logic (no React dependencies)
     engine/       # Game loop, state machine
-    data/         # Meat, skill, character definitions (typed constants)
-    systems/      # Grilling, penalty, restaurant, node systems
-  hooks/          # Custom React hooks bridging game logic and UI
+    data/         # Meat, skill, character, restaurant definitions
+    systems/      # Grilling, penalty, restaurant, node, economy, etc.
+  hooks/          # Custom React hooks (useGameEngine, usePersistence)
   types/          # Shared TypeScript types and interfaces
-  utils/          # Pure utility functions
-public/           # Static assets
+  utils/          # Persistence (localStorage)
+  __tests__/      # All tests (unit, component, e2e)
+    components/   # React component tests (jsdom)
+    hooks/        # Hook tests (jsdom)
+specs/            # Game design docs and module specs
+  modules/        # Per-module implementation blueprints
+  tests/          # Design validation checklists
+.github/
+  workflows/      # GitHub Actions deployment
 ```
 
 Keep game logic in `src/game/` fully decoupled from React. UI reads game state via hooks; it does not modify game state directly.
 
 ---
 
-## Spec Files
+## Architecture
 
-### Game Design
-- [`specs/GAME_DESIGN.md`](./specs/GAME_DESIGN.md) — Full game mechanics specification
-- [`specs/requirements.md`](./specs/requirements.md) — Functional and non-functional requirements
-- [`specs/DEVELOPMENT_PROCESS.md`](./specs/DEVELOPMENT_PROCESS.md) — Development process and TDD workflow
+### Game State Flow
 
-### Spec Tests (`specs/tests/`) — Design validation checklists
-| File | Validates |
-|------|-----------|
-| `FR-01_core-gameplay.test.md` | Grilling states, player actions, serving, clearing |
-| `FR-02_game-over.test.md` | 4 game-over conditions, staged unlock |
-| `FR-03_restaurant-progression.test.md` | Restaurant cycle, difficulty scaling, rank distribution |
-| `FR-04_node-system.test.md` | Node frequency, rest/shop effects |
-| `FR-05_skill-system.test.md` | Skill acquisition, 24 skill effects, interactions |
-| `FR-06_character-selection.test.md` | 5 characters, unlock conditions, Vegan exchange |
-| `FR-07_coin-economy.test.md` | Base/build income, shop costs, balance |
-| `FR-08_meat-catalog.test.md` | Catalog unlock, persistence, display |
-| `FR-09_score-persistence.test.md` | Score, high score, localStorage, True Ending |
-| `DATA_meat-and-sides.test.md` | 11 meats + 2 vegetables, numeric params |
-| `DATA_penalty-system.test.md` | 5 penalty types, mitigations, staff warning |
-| `CROSS_consistency.test.md` | Cross-section consistency checks |
+```
+initGameState(characterId)
+  → gameTick(state, deltaTime, random)    ← rAF loop (60fps)
+  → processAction(state, action, slot)    ← user click
+  → checkPhaseTransition(state)           ← after eat
+```
 
-### Module Specs (`specs/modules/`) — Implementation blueprints
-| File | Module | File Path |
-|------|--------|-----------|
-| `types.spec.md` | Shared types and interfaces | `src/types/index.ts` |
-| `data-constants.spec.md` | Game-wide numeric constants | `src/game/data/constants.ts` |
-| `data-meats.spec.md` | Meat and vegetable data | `src/game/data/meats.ts` |
-| `data-characters.spec.md` | Character definitions | `src/game/data/characters.ts` |
-| `data-restaurants.spec.md` | Restaurant definitions | `src/game/data/restaurants.ts` |
-| `data-skills.spec.md` | Skill definitions | `src/game/data/skills.ts` |
-| `system-grilling.spec.md` | Grilling state machine | `src/game/systems/grilling.ts` |
-| `system-penalty.spec.md` | Penalty system | `src/game/systems/penalty.ts` |
-| `system-restaurant.spec.md` | Restaurant flow | `src/game/systems/restaurant.ts` |
-| `system-game-over.spec.md` | Game over conditions | `src/game/systems/game-over.ts` |
-| `system-node.spec.md` | Node system | `src/game/systems/node.ts` |
-| `system-skill.spec.md` | Skill system | `src/game/systems/skill.ts` |
-| `system-economy.spec.md` | Coin economy | `src/game/systems/economy.ts` |
-| `system-character.spec.md` | Character modifiers | `src/game/systems/character.ts` |
-| `system-catalog.spec.md` | Meat catalog | `src/game/systems/catalog.ts` |
-| `engine-game-loop.spec.md` | Game engine | `src/game/engine/game-loop.ts` |
-| `util-persistence.spec.md` | localStorage persistence | `src/utils/persistence.ts` |
+All game functions are **pure** — they take state and return new state, never mutate.
+
+### Phases
+
+```
+TitleScreen → playing → skill-select → node-select → playing → ... → true-ending
+                ↓                                        ↓
+            game-over                                game-over
+```
+
+### Key Systems
+
+| System | File | Purpose |
+|---|---|---|
+| Grilling | `systems/grilling.ts` | State machine (raw→rare→medium→well-done→burnt), flare risk, flip |
+| Penalty | `systems/penalty.ts` | Raw meat disable, staff warning, grill fire |
+| Economy | `systems/economy.ts` | Coin awards (eat, discard, clear, streaks) |
+| Restaurant | `systems/restaurant.ts` | Serving queue, clearing, advancement, difficulty scaling |
+| Skill | `systems/skill.ts` | Skill acquisition, modifiers, slot expansion |
+| Character | `systems/character.ts` | Character modifiers, Vegan exchange |
+| Node | `systems/node.ts` | Rest/shop between restaurants |
+| Game Over | `systems/game-over.ts` | 5 game-over conditions |
+| Game Loop | `engine/game-loop.ts` | Orchestrates all systems |
+
+### React Layer
+
+| Hook | Purpose |
+|---|---|
+| `useGameEngine` | Central hook: owns GameState, rAF loop, action dispatchers |
+| `usePersistence` | Loads/saves high score, unlocked characters, catalog |
+
+---
+
+## Game Mechanics Summary
+
+### Characters (5)
+
+| Character | Type | Starter Skill | Key Mechanic |
+|---|---|---|---|
+| Salaryman Tanaka | Balanced | Discard Pro | No warning on discard |
+| Gourmet Critic | Specialist | Heat Sensor | Wider sweet spot on premium/elite |
+| Competitive Eater | Specialist | Speed Eater | Faster eating (0.15s cooldown) |
+| Raw Food Advocate | Peaky | Iron Stomach | No raw penalty, but burnt = instant death |
+| Vegan Tashiro | Peaky | Exchange Discount | Exchange meat→veg, ×3 veg coins |
+
+### Game Over Conditions
+
+| Condition | Trigger | Active From |
+|---|---|---|
+| Table Overflow | Table exceeds capacity | All restaurants |
+| Grill Fire | Burnt meat left >15s | High-End+ |
+| Raw Paralysis | Action disabled + table overflow | Boss+ |
+| Burnt Instant | Any meat burns | Raw Food Advocate only |
+| Staff Kicked Out | Staff warning reaches 8 | All restaurants |
+
+### Staff Warning (店員の怒り)
+
+| Count | Effect |
+|---|---|
+| 0-2 | Normal |
+| 3-4 | Visual warning (注意) |
+| 5-7 | 1s eat cooldown (激怒) |
+| 8 | Game Over — kicked out |
+
+### Eat Cooldown
+
+Every eat action has a cooldown:
+- Base: 0.3s
+- Staff angry (≥5): 1.0s
+- Speed Eater skill: ×0.7 reduction
+- Competitive Eater character: ×0.5 reduction
 
 ---
 
 ## Code Style
 
 - Use ES modules (`import/export`), never CommonJS
-- Prefer named exports over default exports (except React components and pages)
+- Prefer named exports over default exports (except App.tsx)
 - Use `const` by default; `let` only when reassignment is necessary
-- Define game data (meats, skills, characters) as `readonly` typed constants in `src/game/data/`
-- All numeric game parameters should be defined as named constants, never as inline magic numbers
+- Define game data as `readonly` typed constants in `src/game/data/`
+- All numeric game parameters as named constants, never inline magic numbers
 - Use `[TUNE]` comments to mark values that need balance tuning
+- UI text in Japanese (primary) with English subtitles where helpful
 
 ---
 
@@ -119,11 +169,54 @@ Keep game logic in `src/game/` fully decoupled from React. UI reads game state v
 - **Game state is a plain object** — no classes, no inheritance in game logic
 - **Immutable state updates** — always return new state; never mutate in place
 - **No side effects in game logic** — `src/game/` functions must be pure and testable
-- **Real-time loop** — use `requestAnimationFrame` or a fixed-interval ticker; do not use `setTimeout` chains for game timing
-- Persistence via `localStorage` only (no backend required)
+- **Real-time loop** — uses `requestAnimationFrame` with delta time capping (100ms max)
+- Persistence via `localStorage` only (no backend)
+- **rAF pauses during actions** — eat/discard pause the loop to prevent race conditions
 
 ---
 
-## Game Design Reference
+## Testing
 
-All game mechanics, data definitions, and parameter values are specified in `GAME_DESIGN.md`. Functional requirements are in `requirements.md`. **Do not duplicate game design content here.**
+```bash
+npm test                    # Run all 1413+ tests
+npm test -- --reporter=verbose  # Verbose output
+```
+
+### Test Organization
+
+| Directory | Count | Environment | Purpose |
+|---|---|---|---|
+| `__tests__/*.test.ts` | ~1100 | node | Game logic unit tests |
+| `__tests__/components/` | ~80 | jsdom | React component tests |
+| `__tests__/hooks/` | ~52 | jsdom | Hook tests |
+| `__tests__/e2e-scenarios.test.ts` | ~30 | node | Integration scenarios |
+
+### E2E Scenarios Cover
+
+- Full restaurant clear for all 5 characters
+- Burnt dish recovery (queue refill)
+- Grill fire staging (chain=no fire, high-end=fire)
+- Table overflow game over
+- True Ending at cycle 4 boss
+- Staff warning kicked out at 8
+- Vegan exchange loop (delayed + instant)
+
+---
+
+## Deployment
+
+- **GitHub Pages**: Auto-deploys on push to `main` via `.github/workflows/deploy.yml`
+- **Base path**: `/yakiniku_roguelike/` (configured in `vite.config.ts`)
+- **Local dev**: `npm run dev` → `http://localhost:5173/yakiniku_roguelike/`
+
+---
+
+## Spec Files Reference
+
+### Game Design
+- [`specs/GAME_DESIGN.md`](./specs/GAME_DESIGN.md) — Full game mechanics
+- [`specs/requirements.md`](./specs/requirements.md) — Functional/non-functional requirements
+- [`specs/DEVELOPMENT_PROCESS.md`](./specs/DEVELOPMENT_PROCESS.md) — TDD workflow
+
+### Module Specs (`specs/modules/`)
+Implementation blueprints for each module with function signatures, types, and behavioral contracts.
